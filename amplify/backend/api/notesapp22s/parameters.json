@@ -1,0 +1,5 @@
+{
+  "AppSyncApiName": "notesapp22s",
+  "DynamoDBBillingMode": "PAY_PER_REQUEST",
+  "DynamoDBEnableServerSideEncryption": false
+}
