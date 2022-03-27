@@ -18,7 +18,10 @@ import {
 import 'antd/dist/antd.css';
 
 import { listNotes } from './graphql/queries';
-import { createNote as CreateNote } from './graphql/mutations';
+import { 
+  createNote as CreateNote
+  , deleteNote as DeleteNote 
+} from './graphql/mutations';
 
 const CLIENT_ID = uuid();
 
@@ -157,6 +160,32 @@ const App = () => {
     }
   };
 
+  const deleteNote = async (noteToDelete) => {
+
+    // Optimistically update state and screen.
+    dispatch({
+      type: "SET_NOTES"
+      , notes: state.notes.filter(x => x !== noteToDelete)
+    });
+
+    // Then do the delete via GraphQL mutation.
+    try {
+      await API.graphql({
+        query: DeleteNote
+        , variables: { 
+          input: {
+            id: noteToDelete.id
+          } 
+        }
+      });
+    }
+
+    catch (err) {
+      console.error(err);
+    }
+
+  };
+
   const onChange = (e) => {
     dispatch({ 
       type: 'SET_INPUT'
@@ -169,6 +198,14 @@ const App = () => {
     return (
       <List.Item 
         style={styles.item}
+        actions={[
+          <p
+            style={styles.p}
+            onClick={() => deleteNote(item)}
+          >
+            Delete
+          </p>
+        ]}
       >
         <List.Item.Meta
           title={item.name}
