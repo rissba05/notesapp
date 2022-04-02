@@ -24,6 +24,8 @@ import {
   , updateNote as UpdateNote
 } from './graphql/mutations';
 
+import { onCreateNote } from './graphql/subscriptions';
+
 const CLIENT_ID = uuid();
 
 const initialState = {
@@ -53,7 +55,6 @@ const reducer = (state, action) => {
         , loading: false
         , error: true 
       };
-
 
     case 'ADD_NOTE':
       return { 
@@ -91,7 +92,6 @@ const App = () => {
 
   const [state, dispatch] = useReducer(reducer, initialState);
 
-
   const fetchNotes = async () => {
     try {
       const notesData = await API.graphql({
@@ -111,12 +111,32 @@ const App = () => {
     }
   };
 
+  
   useEffect(
     () => {
-    fetchNotes()
+      fetchNotes();
+
+      const subscription = API.graphql({
+        query: onCreateNote
+      }).subscribe({
+          next: noteData => {
+            console.log(noteData);
+            const note = noteData.value.data.onCreateNote;
+
+            if (CLIENT_ID === note.clientId) return;
+            dispatch({ 
+              type: 'ADD_NOTE'
+              , note: note 
+            });
+        }
+      });
+
+      // Pass a clean-up function to React.
+      return () => subscription.unsubscribe()
     }
     , []
   );
+
 
 
   const createNote = async () => {
@@ -244,7 +264,7 @@ const App = () => {
         ]}
       >
         <List.Item.Meta
-          title={`${item.name}${item.completed ? ' (completed)' : ''} }`}
+          title={`${item.name}${item.completed ? ' (completed)' : ''} `}
           description={item.description}
         />
       </List.Item>
